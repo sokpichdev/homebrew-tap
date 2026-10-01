@@ -1,0 +1,15 @@
+name: Test formula
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew tap sokpichdev/tap "$GITHUB_WORKSPACE"
+      - run: brew install sokpichdev/tap/mobie
+      - run: brew test sokpichdev/tap/mobie
+      - run: brew audit --strict sokpichdev/tap/mobie

@@ -1,0 +1,29 @@
+name: Bump mobie
+
+# Releases go public only after a maintainer approves them on npm, so poll npm
+# instead of being triggered by the mobie release workflow.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update formula to the latest npm release
+        run: |
+          latest=$(npm view @sok_pich/mobie version)
+          current=$(sed -n 's|.*/mobie-\([0-9.]*\)\.tgz".*|\1|p' Formula/mobie.rb)
+          if [ "$latest" = "$current" ]; then echo "Up to date ($current)"; exit 0; fi
+          url="https://registry.npmjs.org/@sok_pich/mobie/-/mobie-$latest.tgz"
+          sha=$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)
+          sed -i -e "s|^  url \".*\"|  url \"$url\"|" -e "s|^  sha256 \".*\"|  sha256 \"$sha\"|" Formula/mobie.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "mobie $latest"
+          git push
